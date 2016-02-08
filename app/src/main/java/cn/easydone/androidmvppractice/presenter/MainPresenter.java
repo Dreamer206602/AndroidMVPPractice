@@ -12,6 +12,7 @@ import io.realm.RealmResults;
  */
 public interface MainPresenter extends Presenter<MainView> {
 
+    void loadDataFromRealmSuccess(RealmResults<User> users);
     void loadDataSuccess(RealmResults<User> users);
     void loadDataFailure();
 }

@@ -5,12 +5,14 @@ import android.support.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.easydone.androidmvppractice.request.GitHubApiUtils;
 import cn.easydone.androidmvppractice.bean.GitHubUser;
 import cn.easydone.androidmvppractice.bean.User;
 import cn.easydone.androidmvppractice.presenter.MainPresenterImp;
+import cn.easydone.androidmvppractice.request.GitHubApiUtils;
 import io.realm.Realm;
+import io.realm.RealmResults;
 import rx.Observable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -23,15 +25,18 @@ import rx.schedulers.Schedulers;
 public class UserModel {
 
     private MainPresenterImp mainPresenterImp;
-    private Realm realm;
 
     public UserModel(MainPresenterImp mainPresenterImp) {
         this.mainPresenterImp = mainPresenterImp;
-        realm = Realm.getDefaultInstance();
     }
 
-    public void loadData(List<String> users) {
-        Observable.merge(getObservables(users))
+    public void loadDataFromRealm(Realm realm) {
+        RealmResults<User> users = realm.where(User.class).findAll();
+        mainPresenterImp.loadDataFromRealmSuccess(users);
+    }
+
+    public Subscription loadData(List<String> users, Realm realm) {
+        return Observable.merge(getObservables(users))
                 .buffer(users.size())
                 .map(this::getUserList)
                 .doOnNext(this::storeUserList)

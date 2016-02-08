@@ -7,18 +7,16 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import cn.easydone.androidmvppractice.R;
-import cn.easydone.androidmvppractice.bean.User;
 import cn.easydone.androidmvppractice.adapter.UserAdapter;
+import cn.easydone.androidmvppractice.bean.User;
 import cn.easydone.androidmvppractice.presenter.MainPresenterImp;
 import cn.easydone.androidmvppractice.view.MainView;
 import fr.castorflex.android.circularprogressbar.CircularProgressBar;
@@ -36,15 +34,7 @@ public class MainActivity extends RxAppCompatActivity implements MainView {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        List<String> users = new ArrayList<>();
-        users.add("liangzhitao");
-        users.add("AlanCheen");
-        users.add("yongjhih");
-        users.add("zzz40500");
-        users.add("greenrobot");
-        users.add("nimengbo");
-
-        mainPresenterImp = new MainPresenterImp(this, users);
+        mainPresenterImp = new MainPresenterImp(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -64,7 +54,27 @@ public class MainActivity extends RxAppCompatActivity implements MainView {
         linearLayoutManager.setSmoothScrollbarEnabled(false);
         recyclerView.setLayoutManager(linearLayoutManager);
 
+
+        mainPresenterImp.loadDataFromRealm();
         mainPresenterImp.loadData();
+
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                int position = viewHolder.getAdapterPosition();
+                mainPresenterImp.removeDataFromRealm(position);
+                userAdapter.notifyItemRemoved(position);
+                userAdapter.notifyItemRangeChanged(position, userAdapter.getItemCount());
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
     @Override
@@ -101,7 +111,7 @@ public class MainActivity extends RxAppCompatActivity implements MainView {
 
     @Override
     public void notifyDataSetChanged(RealmResults<User> users) {
-
+        userAdapter.notifyDataSetChanged();
     }
 
     @Override
